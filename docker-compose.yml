@@ -1,0 +1,15 @@
+services:
+  server:
+    build: server
+    ports:
+      - "31337:31337"
+    command: 5 50
+    environment:
+      SERVER_ADDRESS: "server:31337"
+  client:
+    build: clients
+    command: find_partitions 50
+    links:
+      - server
+    environment:
+      SERVER_ADDRESS: "server:31337"

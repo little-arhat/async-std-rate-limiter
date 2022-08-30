@@ -1,0 +1,21 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+description = "Serving L symbols at a time"
+authors = ["Roma Sokolov"]
+
+[profile]
+[profile.release]
+panic = "abort"
+opt-level = "s"
+codegen-units = 1
+debug = false
+lto = true
+incremental = false
+
+[dependencies]
+rand = "0.8.5"
+futures = "0.3"
+governor = {version = "0.4.2", default-features = false, features = ["std", "jitter"] }
+async-std = "1.11.0"
