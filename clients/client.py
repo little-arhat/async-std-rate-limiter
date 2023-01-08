@@ -25,12 +25,8 @@ class Result(Enum):
 PARSE = {PARSE_SUCCESS: Result.SUCCESS, PARSE_FAILURE: Result.FAILURE}
 
 
-def ms(s):
-    return int((s * 1000))
-
-
 def stamp_ms(start_s):
-    return ms(time.time() - start_s)
+    return int((time.time() - start_s) * 1000)
 
 
 def roundtrip(s, symbol):
@@ -172,13 +168,10 @@ def find_partitions(rate_limit):
         print(f'Testing "{symbol}"')
         for partition in found_partitions:  # inner 1
             sample_element = partition[0]
-            # first reach failure for a *sample_element*
             sample_response = yield sample_element
             while sample_response is not Result.FAILURE:
                 sample_response = yield sample_element
-            # then test target *symbol*
             target_response = yield symbol
-            # replenish used cell before proceeding
             time.sleep(replenish_rate_s)
             if target_response is Result.FAILURE:
                 partition.append(symbol)
@@ -202,89 +195,50 @@ def define_subcommand(subcommands, fn, args):
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Request random symbols with given frequency")
-
-    subcommands = parser.add_subparsers(
-        help="Client mode", metavar="CMD", required=True
-    )
-
-    define_subcommand(
-        subcommands,
-        fast_random,
-        dict(
-            delay_ms=dict(
-                metavar="DELAY", type=int, help="Delay between requests in ms"
-            )
-        ),
-    )
-
-    define_subcommand(
-        subcommands,
-        cycle,
-        dict(
-            delay_ms=dict(
-                metavar="DELAY", type=int, help="Delay between requests in ms"
-            )
-        ),
-    )
-
-    define_subcommand(
-        subcommands,
-        burst,
-        dict(
-            iterations=dict(
-                metavar="ITERATIONS",
-                type=int,
-                nargs="?",
-                default=5,
-                help="How many bursts to send",
-            )
-        ),
-    )
-
-    define_subcommand(
-        subcommands,
-        symbol,
-        dict(
-            symbol=dict(metavar="SYMBOL", type=str, help="Symbol to send"),
-            delay_ms=dict(
-                metavar="DELAY", type=int, help="Delay between requests in ms"
-            ),
-        ),
-    )
-
-    define_subcommand(
-        subcommands,
-        safe_symbol,
-        dict(
-            symbol=dict(metavar="SYMBOL", type=str, help="Symbol to send"),
-            rate_limit=dict(
-                metavar="RATE_LIMIT", type=int, help="Rate limit configured on a server"
-            ),
-        ),
-    )
-
-    define_subcommand(
-        subcommands,
-        scenario,
-        dict(
-            scenario=dict(
-                metavar="SCENARIO",
-                type=str,
-                help="Comma-separated list of commands and delays",
-            )
-        ),
-    )
-
-    define_subcommand(
-        subcommands,
-        find_partitions,
-        dict(
-            rate_limit=dict(
-                metavar="RATE_LIMIT", type=int, help="Rate limit configured on a server"
-            )
-        ),
-    )
-
+    subcommands = parser.add_subparsers(help="Client mode", metavar="CMD", required=True)
+    define_subcommand(subcommands,
+                      fast_random,
+                      dict(delay_ms=dict(metavar="DELAY",
+                                         type=int,
+                                         help="Delay between requests in ms")))
+    define_subcommand(subcommands,
+                      cycle,
+                      dict(delay_ms=dict(metavar="DELAY",
+                                         type=int,
+                                         help="Delay between requests in ms")))
+    define_subcommand(subcommands,
+                      burst,
+                      dict(iterations=dict(metavar="ITERATIONS",
+                                           type=int,
+                                           nargs="?",
+                                           default=5,
+                                           help="How many bursts to send")))
+    define_subcommand(subcommands,
+                      symbol,
+                      dict(symbol=dict(metavar="SYMBOL",
+                                       type=str,
+                                       help="Symbol to send"),
+                           delay_ms=dict(metavar="DELAY",
+                                         type=int,
+                                         help="Delay between requests in ms")))
+    define_subcommand(subcommands,
+                      safe_symbol,
+                      dict(symbol=dict(metavar="SYMBOL",
+                                       type=str,
+                                       help="Symbol to send"),
+                           rate_limit=dict(metavar="RATE_LIMIT",
+                                           type=int,
+                                           help="Rate limit configured on a server")))
+    define_subcommand(subcommands,
+                      scenario,
+                      dict(scenario=dict(metavar="SCENARIO",
+                                         type=str,
+                                         help="Comma-separated list of commands and delays")))
+    define_subcommand(subcommands,
+                      find_partitions,
+                      dict(rate_limit=dict(metavar="RATE_LIMIT",
+                                           type=int,
+                                           help="Rate limit configured on a server")))
     args = vars(parser.parse_args())
     func = args.pop("func")
     client = mk_client(*address())
